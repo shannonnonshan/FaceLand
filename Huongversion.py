@@ -8,7 +8,7 @@ from PIL import Image, ImageTk
 # Load cascades
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
-nose_cascade = cv2.CascadeClassifier('D:/STUDYHK2-2024/DIP/Detection-Face/haarcascade/haarcascade_mcs_nose.xml')
+nose_cascade = cv2.CascadeClassifier('./haarcascade/haarcascade_mcs_nose.xml')
 
 # Load filter images (with alpha channel)
 glasses = cv2.imread("filters/glasses.png", cv2.IMREAD_UNCHANGED)
@@ -38,6 +38,17 @@ def overlay_image(bg, overlay, x, y, size):
 root = tb.Window(themename="superhero")
 root.title("Funny Face Filters")
 root.geometry("800x650")
+window_width = 800
+window_height = 700
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+
+x = (screen_width - window_width) // 2
+y = (screen_height - window_height) // 2
+
+root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+root.resizable(False, False)
 
 # Title label
 title_label = tb.Label(root, text="🎭 Funny Face Filters 🎭", font=("Helvetica", 24, "bold"), bootstyle="inverse-info")

@@ -42,6 +42,18 @@ def overlay_image(bg, overlay, x, y, size):
 root = tb.Window(themename="superhero")
 root.title("Funny Face Filters")
 root.geometry("800x650")
+window_width = 800
+window_height = 650
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+
+x = (screen_width - window_width) // 2
+y = (screen_height - window_height) // 2
+
+root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+#root.resizable(False, False)
+
 
 # ========== Welcome Page ==========
 # Load images
@@ -60,30 +72,76 @@ bg_canvas.pack(fill="both", expand=True)
 bg_canvas.create_image(0, 0, image=bg_photo, anchor="nw")
 
 # Labels
+#subjectName = ["Subject Name"]
+canvas_width = 800
+title_y = 30
+subtitle_y = 60
 
+bg_canvas.create_text(canvas_width // 2, title_y,
+                      text="Subject Name",
+                      font=("Helvetica", 14, "bold"),
+                      fill="darkblue",
+                      anchor="n")  # anchor 'n' để canh từ trên xuống
 
-students = ["Đinh Thị Thanh Vy  22110093", "Đoàn Minh Khanh   22110042", "Lê Thị Thu Hương  22110040"]
+bg_canvas.create_text(canvas_width // 2, subtitle_y,
+                      text="Digital Image Processing",
+                      font=("Helvetica", 16,"bold"),
+                      fill="#3E7B27",
+                      anchor="n")
+bg_canvas.create_text(700, 100,
+                      text="Dr. Hoàng Văn Dũng",
+                      font=("Helvetica", 12,"bold"),
+                      fill="black",
+                      anchor="n")
+
+students = ["Đinh Thị Thanh Vy  22110093", 
+            "Đoàn Minh Khanh   22110042", 
+            "Lê Thị Thu Hương  22110040"]
+
+canvas_width = 800
+canvas_height = 600
+
+start_x = 160
+gap = 250
+y_position = canvas_height - 30  # nằm gần mép dưới
+
 for idx, name in enumerate(students):
-    bg_canvas.create_text(780, 30 + idx * 30,
+    x = start_x + idx * gap
+    y = y_position
+
+    # Lớp bóng màu trắng (lệch nhẹ)
+    bg_canvas.create_text(x + 2, y + 2,
                           text=name,
-                          font=("Helvetica", 10),
-                          fill="black",  # màu chữ
-                          anchor="e")
-    bg_canvas.create_image(400, 280, image=team_photo)
+                          font=("Helvetica", 12, "bold"),
+                          fill="white",
+                          anchor="s")
+
+    # Lớp chính màu xanh lá
+    bg_canvas.create_text(x, y,
+                          text=name,
+                          font=("Helvetica", 12, "bold"),
+                          fill="#5B913B",
+                          anchor="s")
+bg_canvas.create_image(400, 280, image=team_photo)
 
 # Start Button
 def start_app():
     welcome_frame.pack_forget()
     main_frame.pack(fill="both", expand=True)
     update_frame()
+   
+   # Cấu hình canvas để hỗ trợ transparency
+bg_canvas.configure(bg='#75d0ef')  # Màu nền canvas
+   
+   # Đặt nút lên canvas (cách tốt hơn)
 
 start_button = ctk.CTkButton(master=bg_canvas,
                              text="Let's Get Started",
                              font=("Helvetica", 20, "bold"),
                              width=200,
                              height=60,
-                            
-                             fg_color="#1C274C",
+                             corner_radius=20,
+                             fg_color="#FE7743",
                              text_color="white",         # Chữ trắng
                              hover_color="#3E4A6C",      # Màu khi hover
                              command=start_app)
@@ -148,7 +206,22 @@ def capture_image():
         cv2.imwrite(filename, frame)
         print(f"Image saved as {filename}")
 
-capture_button = tb.Button(main_frame, text="📸 Capture Image", command=capture_image, bootstyle="success", width=25)
+camera_icon = ctk.CTkImage(
+            light_image=Image.open("cameraicon.png"),
+            size=(30, 30)
+        )
+
+capture_button = ctk.CTkButton(
+    master=main_frame,
+    text="",
+    image = camera_icon,
+    command=capture_image,
+    width=60,
+    height=60,
+    corner_radius=60,  # Bằng 1/2 chiều cao để tạo hình tròn
+    fg_color="#FF6363",
+    hover_color="#3CB371"
+)
 capture_button.pack(pady=15)
 
 # Webcam logic
