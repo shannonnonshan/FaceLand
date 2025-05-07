@@ -1,5 +1,9 @@
 import cv2
 import numpy as np
+import tkinter as tk
+from tkinter import ttk
+import customtkinter as ctk
+
 import ttkbootstrap as tb
 from ttkbootstrap.constants import *
 from tkinter import Canvas
@@ -8,9 +12,9 @@ from PIL import Image, ImageTk
 # Load cascades
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
-nose_cascade = cv2.CascadeClassifier('D:/STUDYHK2-2024/DIP/Detection-Face/haarcascade/haarcascade_mcs_nose.xml')
+nose_cascade = cv2.CascadeClassifier('haarcascade/haarcascade_mcs_nose.xml')
 
-# Load filter images (with alpha channel)
+# Load filter images
 glasses = cv2.imread("filters/glasses.png", cv2.IMREAD_UNCHANGED)
 hat = cv2.imread("filters/hat.png", cv2.IMREAD_UNCHANGED)
 mustache = cv2.imread("filters/mustache.png", cv2.IMREAD_UNCHANGED)
@@ -34,22 +38,126 @@ def overlay_image(bg, overlay, x, y, size):
     bg[y:y+h, x:x+w] = result
     return bg
 
-# Initialize the tkinter window
+# Initialize tkinter window
 root = tb.Window(themename="superhero")
 root.title("Funny Face Filters")
 root.geometry("800x650")
 
-# Title label
-title_label = tb.Label(root, text="🎭 Funny Face Filters 🎭", font=("Helvetica", 24, "bold"), bootstyle="inverse-info")
+# ========== Welcome Page ==========
+# Load images
+bg_image = Image.open("background.jpg").resize((800, 650))
+bg_photo = ImageTk.PhotoImage(bg_image)
+
+team_img = Image.open("team_photo.png").resize((350, 250))
+team_photo = ImageTk.PhotoImage(team_img)
+
+# Welcome Frame
+welcome_frame = tb.Frame(root)
+welcome_frame.pack(fill="both", expand=True)
+
+bg_canvas = Canvas(welcome_frame, width=800, height=800, bg="#75d0ef")
+bg_canvas.pack(fill="both", expand=True)
+bg_canvas.create_image(0, 0, image=bg_photo, anchor="nw")
+
+# Labels
+
+
+students = ["Đinh Thị Thanh Vy  22110093", "Đoàn Minh Khanh   22110042", "Lê Thị Thu Hương  22110040"]
+for idx, name in enumerate(students):
+    bg_canvas.create_text(780, 30 + idx * 30,
+                          text=name,
+                          font=("Helvetica", 10),
+                          fill="black",  # màu chữ
+                          anchor="e")
+    bg_canvas.create_image(400, 280, image=team_photo)
+
+# Start Button
+def start_app():
+    welcome_frame.pack_forget()
+    main_frame.pack(fill="both", expand=True)
+    update_frame()
+
+start_button = ctk.CTkButton(master=bg_canvas,
+                             text="Let's Get Started",
+                             font=("Helvetica", 20, "bold"),
+                             width=200,
+                             height=60,
+                            
+                             fg_color="#1C274C",
+                             text_color="white",         # Chữ trắng
+                             hover_color="#3E4A6C",      # Màu khi hover
+                             command=start_app)
+
+# Đặt nút lên canvas tại vị trí mong muốn
+bg_canvas.create_window(400, 400, window= start_button)
+
+# ========== Main Page ==========
+main_frame = tb.Frame(root)
+
+title_label = tb.Label(main_frame, text="🎭 Funny Face Filters 🎭", font=("Helvetica", 22, "bold"), bootstyle="inverse-info")
 title_label.pack(pady=10)
 
-# Canvas for webcam
-canvas = Canvas(root, width=640, height=480)
+canvas = Canvas(main_frame, width=640, height=420)
 canvas.pack()
 
-# Capture from camera
+filter_frame = tb.Frame(main_frame)
+filter_frame.pack(pady=15)
+
+glasses_button = ctk.CTkButton(master=filter_frame,
+                               text="Glasses",
+                               command=lambda: select_filter("glasses"),
+                               fg_color="black",
+                               text_color="white", width=55, height=35,
+                               font=("Arial", 12,"bold"),
+                               corner_radius=20)
+glasses_button.pack(side=ctk.LEFT, padx=10)
+
+hat_button = ctk.CTkButton(master=filter_frame,
+                           text="Hat",
+                           command=lambda: select_filter("hat"),
+                           fg_color="black",
+                           font=("Arial", 12,"bold"),
+                           text_color="white", width=55, height=35,
+                           corner_radius=20)
+hat_button.pack(side=ctk.LEFT, padx=10)
+mustache_button = ctk.CTkButton(master=filter_frame,
+                               text="Mustache",
+                               command=lambda: select_filter("mustache"),
+                               fg_color="black",
+                               font=("Arial", 12,"bold"),
+                               text_color="white", width=55, height=35,
+                               corner_radius=20)
+mustache_button.pack(side=ctk.LEFT, padx=10)
+
+# Theme switcher
+def change_theme(theme_name):
+    root.style.theme_use(theme_name)
+
+themes = ["superhero", "darkly", "cosmo", "morph", "flatly"]
+theme_menu = tb.Menubutton(filter_frame, text="Change Theme", bootstyle="secondary outline") # Place in filter_frame
+menu = tb.Menu(theme_menu)
+theme_menu["menu"] = menu
+for t in themes:
+    menu.add_command(label=t, command=lambda name=t: change_theme(name))
+theme_menu.pack(side=LEFT, padx=10) # Use pack with side=LEFT
+# Capture button
+def capture_image():
+    ret, frame = cap.read()
+    if ret:
+        filename = "captured_image.png"
+        cv2.imwrite(filename, frame)
+        print(f"Image saved as {filename}")
+
+capture_button = tb.Button(main_frame, text="📸 Capture Image", command=capture_image, bootstyle="success", width=25)
+capture_button.pack(pady=15)
+
+# Webcam logic
 cap = cv2.VideoCapture(0)
 current_filter = None
+
+def select_filter(filter_name):
+    global current_filter
+    current_filter = filter_name
 
 def update_frame():
     global current_filter, cap
@@ -63,21 +171,20 @@ def update_frame():
         roi_gray = gray[fy:fy+fh, fx:fx+fw]
         eyes = eye_cascade.detectMultiScale(roi_gray)
 
-        if current_filter == "glasses":
-            if len(eyes) >= 2:
-                eyes = sorted(eyes, key=lambda x: x[0])
-                (ex1, ey1, ew1, eh1) = eyes[0]
-                (ex2, ey2, ew2, eh2) = eyes[1]
-                eye1_center = (fx + ex1 + ew1 // 2, fy + ey1 + eh1 // 2)
-                eye2_center = (fx + ex2 + ew2 // 2, fy + ey2 + eh2 // 2)
-                dx = eye2_center[0] - eye1_center[0]
-                glasses_width = int(2.2 * abs(dx))
-                glasses_height = int(glasses_width * glasses.shape[0] / glasses.shape[1])
-                center_x = (eye1_center[0] + eye2_center[0]) // 2
-                center_y = (eye1_center[1] + eye2_center[1]) // 2
-                x = center_x - glasses_width // 2
-                y = center_y - glasses_height // 2
-                frame = overlay_image(frame, glasses, x, y, (glasses_width, glasses_height))
+        if current_filter == "glasses" and len(eyes) >= 2:
+            eyes = sorted(eyes, key=lambda x: x[0])
+            (ex1, ey1, ew1, eh1) = eyes[0]
+            (ex2, ey2, ew2, eh2) = eyes[1]
+            eye1_center = (fx + ex1 + ew1 // 2, fy + ey1 + eh1 // 2)
+            eye2_center = (fx + ex2 + ew2 // 2, fy + ey2 + eh2 // 2)
+            dx = eye2_center[0] - eye1_center[0]
+            glasses_width = int(2.2 * abs(dx))
+            glasses_height = int(glasses_width * glasses.shape[0] / glasses.shape[1])
+            center_x = (eye1_center[0] + eye2_center[0]) // 2
+            center_y = (eye1_center[1] + eye2_center[1]) // 2
+            x = center_x - glasses_width // 2
+            y = center_y - glasses_height // 2
+            frame = overlay_image(frame, glasses, x, y, (glasses_width, glasses_height))
 
         elif current_filter == "hat":
             hat_width = fw
@@ -103,50 +210,7 @@ def update_frame():
     canvas.image = img_tk
     canvas.after(10, update_frame)
 
-def select_filter(filter_name):
-    global current_filter
-    current_filter = filter_name
-
-def capture_image():
-    ret, frame = cap.read()
-    if ret:
-        filename = "captured_image.png"
-        cv2.imwrite(filename, frame)
-        print(f"Image saved as {filename}")
-
-# Filter buttons frame
-filter_frame = tb.Frame(root)
-filter_frame.pack(pady=10)
-
-glasses_button = tb.Button(filter_frame, text="Glasses", command=lambda: select_filter("glasses"), bootstyle="primary")
-glasses_button.grid(row=0, column=0, padx=10)
-
-hat_button = tb.Button(filter_frame, text="Hat", command=lambda: select_filter("hat"), bootstyle="info")
-hat_button.grid(row=0, column=1, padx=10)
-
-mustache_button = tb.Button(filter_frame, text="Mustache", command=lambda: select_filter("mustache"), bootstyle="warning")
-mustache_button.grid(row=0, column=2, padx=10)
-
-# Theme changer
-def change_theme(theme_name):
-    root.style.theme_use(theme_name)
-
-themes = ["superhero", "darkly", "cosmo", "morph", "flatly"]
-theme_menu = tb.Menubutton(root, text="Change Theme", bootstyle="secondary outline")
-menu = tb.Menu(theme_menu)
-theme_menu["menu"] = menu
-
-for t in themes:
-    menu.add_command(label=t, command=lambda name=t: change_theme(name))
-
-theme_menu.pack(pady=10)
-
-# Capture button
-capture_button = tb.Button(root, text="📸 Capture Image", command=capture_image, bootstyle="success", width=25)
-capture_button.pack(pady=15)
-
-# Start loop
-update_frame()
+# Run the GUI
 root.mainloop()
 cap.release()
 cv2.destroyAllWindows()
