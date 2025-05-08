@@ -152,39 +152,61 @@ bg_canvas.create_window(400, 400, window= start_button)
 # ========== Main Page ==========
 main_frame = tb.Frame(root)
 
-title_label = tb.Label(main_frame, text="🎭 Funny Face Filters 🎭", font=("Helvetica", 22, "bold"), bootstyle="inverse-info")
-title_label.pack(pady=10)
-
-canvas = Canvas(main_frame, width=640, height=420)
-canvas.pack()
+canvas = Canvas(main_frame, width=640, height=380)
+canvas.pack(pady=25)
 
 filter_frame = tb.Frame(main_frame)
 filter_frame.pack(pady=15)
 
+
+glass_icon = ctk.CTkImage(
+            light_image=Image.open("glasses.png"),
+            size=(35, 35)
+        )
+
 glasses_button = ctk.CTkButton(master=filter_frame,
-                               text="Glasses",
+                               text="",
+                               image = glass_icon,
                                command=lambda: select_filter("glasses"),
-                               fg_color="black",
-                               text_color="white", width=55, height=35,
+                               fg_color="#EFEEEA",
+                               border_width= 2,
+                               border_color="#222222",
+                               text_color="white", width=50, height=25,
                                font=("Arial", 12,"bold"),
-                               corner_radius=20)
+                               corner_radius=100)
 glasses_button.pack(side=ctk.LEFT, padx=10)
 
+hat_icon = ctk.CTkImage(
+            light_image=Image.open("hat.png"),
+            size=(35, 35))
 hat_button = ctk.CTkButton(master=filter_frame,
-                           text="Hat",
+                           text="",
+                           image = hat_icon,
                            command=lambda: select_filter("hat"),
-                           fg_color="black",
+                               fg_color="#EFEEEA",
+                               border_width= 2,
+                               border_color="#222222",
                            font=("Arial", 12,"bold"),
-                           text_color="white", width=55, height=35,
-                           corner_radius=20)
+                           text_color="white", width=50, height=25,
+                           corner_radius=25)
 hat_button.pack(side=ctk.LEFT, padx=10)
+hat_button.pack(side=ctk.LEFT, padx=10)
+
+mustache_icon = ctk.CTkImage(
+            light_image=Image.open("mustache.png"),
+            size=(35, 35)
+        )
+
 mustache_button = ctk.CTkButton(master=filter_frame,
-                               text="Mustache",
+                               text="",
+                               image = mustache_icon,
                                command=lambda: select_filter("mustache"),
-                               fg_color="black",
+                               fg_color="#EFEEEA",
+                               border_width= 2,
+                               border_color="#222222",
                                font=("Arial", 12,"bold"),
-                               text_color="white", width=55, height=35,
-                               corner_radius=20)
+                               text_color="white", width=50, height=25,
+                               corner_radius=25)
 mustache_button.pack(side=ctk.LEFT, padx=10)
 
 # Theme switcher
@@ -218,11 +240,12 @@ capture_button = ctk.CTkButton(
     command=capture_image,
     width=60,
     height=60,
+    border_width=0,
     corner_radius=60,  # Bằng 1/2 chiều cao để tạo hình tròn
     fg_color="#FF6363",
     hover_color="#3CB371"
 )
-capture_button.pack(pady=15)
+capture_button.pack(pady=40)
 
 # Webcam logic
 cap = cv2.VideoCapture(0)
