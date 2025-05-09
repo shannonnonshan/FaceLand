@@ -10,6 +10,10 @@ from addfilter import show_add_filter_page
 import os
 from datetime import datetime
 
+processed_frame = None
+prev_hat_pos = None
+prev_face = None
+
 current_glasses_index = 0
 current_hat_index = 0
 current_mustache_index = 0
@@ -29,8 +33,8 @@ def show_main_page(root):
    
     # Webcam logic
     
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt.xml')
+    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye_tree_eyeglasses.xml')
     nose_cascade = cv2.CascadeClassifier('haarcascade/haarcascade_mcs_nose.xml')
     if cap is None or not cap.isOpened():
         cap = cv2.VideoCapture(0)
@@ -102,17 +106,18 @@ def show_main_page(root):
     feature_frame.pack(pady=15)  
     # Capture button
     def capture_image():
-        ret, frame = cap.read()
-        if ret:
+        global processed_frame
+        if processed_frame is not None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{timestamp}.png"
 
             os.makedirs("capture", exist_ok=True)
-
             filepath = os.path.join("capture", filename)
 
-            cv2.imwrite(filepath, frame)
+            cv2.imwrite(filepath, processed_frame)
             print(f"Image saved as {filepath}")
+        else:
+            print("No processed frame available to save.")
 
     camera_icon = ctk.CTkImage(
         light_image=Image.open("images/cameraicon.png"),
@@ -200,18 +205,33 @@ def show_main_page(root):
     
 
     def update_frame():
-        global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index, running
-        if not running:
-            return
+        
+        global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index
         ret, frame = cap.read()
         if not ret:
             return
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
-        for (fx, fy, fw, fh) in faces:
+        global prev_face
+        if len(faces) > 0:
+            faces = sorted(faces, key=lambda x: x[2]*x[3], reverse=True)
+            (fx_new, fy_new, fw_new, fh_new) = faces[0]
+
+            alpha = 0.4
+            if prev_face is not None:
+                fx = int(alpha * fx_new + (1 - alpha) * prev_face[0])
+                fy = int(alpha * fy_new + (1 - alpha) * prev_face[1])
+                fw = int(alpha * fw_new + (1 - alpha) * prev_face[2])
+                fh = int(alpha * fh_new + (1 - alpha) * prev_face[3])
+            else:
+                fx, fy, fw, fh = fx_new, fy_new, fw_new, fh_new
+
+            prev_face = (fx, fy, fw, fh)
+
             roi_gray = gray[fy:fy+fh, fx:fx+fw]
             eyes = eye_cascade.detectMultiScale(roi_gray)
+
 
             if current_filter == "glasses" and len(eyes) >= 2:
                 eyes = sorted(eyes, key=lambda x: x[0])
@@ -230,12 +250,30 @@ def show_main_page(root):
                 frame = overlay_image(frame, img, x, y, (glasses_width, glasses_height))
 
             elif current_filter == "hats":
+                global prev_hat_pos
+
                 hat_width = fw
                 imgh = filters["hats"][current_hat_index]["img"]
                 hat_height = int(hat_width * imgh.shape[0] / imgh.shape[1])
-                hx = fx
-                hy = fy - hat_height + 15
+
+                # Vị trí mũ mới
+                hx_new = fx
+                hy_new = fy - hat_height + 15
+
+                # Làm mượt vị trí
+                alpha = 0.5  # hệ số làm mượt
+                if prev_hat_pos is not None:
+                    hx = int(alpha * hx_new + (1 - alpha) * prev_hat_pos[0])
+                    hy = int(alpha * hy_new + (1 - alpha) * prev_hat_pos[1])
+                else:
+                    hx, hy = hx_new, hy_new
+
+                # Lưu vị trí cũ
+                prev_hat_pos = (hx, hy)
+
+                # Overlay
                 frame = overlay_image(frame, imgh, hx, hy, (hat_width, hat_height))
+
 
             elif current_filter == "mustaches":
                 nose = nose_cascade.detectMultiScale(roi_gray, 1.3, 5)
@@ -247,8 +285,10 @@ def show_main_page(root):
                     mx = fx + nx + nw // 2 - mustache_width // 2
                     my = fy + ny + nh - 40
                     frame = overlay_image(frame, imgm, mx, my, (mustache_width, mustache_height))
-
+        
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        global processed_frame
+        processed_frame = frame.copy()
         img = Image.fromarray(frame_rgb)
         img_tk = ImageTk.PhotoImage(image=img)
         canvas.create_image(0, 0, anchor="nw", image=img_tk)
