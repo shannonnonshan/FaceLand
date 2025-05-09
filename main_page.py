@@ -29,7 +29,7 @@ def show_main_page(root):
 
     filter_types = ["glasses", "hats", "mustaches"]
     filters = {ftype: [] for ftype in filter_types}
-    filter_buttons = {ftype: [] for ftype in filter_types}
+    filter_buttons = {ftype: [] for ftype in filter_types}  # NEW: store buttons
 
     for ftype in filter_types:
         folder_path = f"filters/{ftype}"
@@ -39,30 +39,15 @@ def show_main_page(root):
                 img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
                 filters[ftype].append({"img": img, "path": path, "index": idx})
 
-    def set_filter_index(filter_type, index):
-        global current_glasses_index, current_hat_index, current_mustache_index
-        if filter_type == "glasses":
-            current_glasses_index = index
-        elif filter_type == "hats":
-            current_hat_index = index
-        elif filter_type == "mustaches":
-            current_mustache_index = index
-
-    def select_filter(filter_name):
-        global current_filter
-        current_filter = filter_name
-
     def on_filter_button_click(filter_type, index):
         set_filter_index(filter_type, index)
         select_filter(filter_type)
 
-        # Reset tất cả filter button về mặc định
-        for ftype in filter_types:
-            for i, btn in enumerate(filter_buttons[ftype]):
-                if ftype == filter_type and i == index:
-                    btn.configure(fg_color="#FFC0CB")  # Highlight selected
-                else:
-                    btn.configure(fg_color="#EFEEEA")  # Reset others
+        for i, btn in enumerate(filter_buttons[filter_type]):
+            if i == index:
+                btn.configure(fg_color="#FFC0CB")  # Highlight color
+            else:
+                btn.configure(fg_color="#EFEEEA")  # Default color
 
     def create_filter_buttons(filter_type, frame):
         for item in filters[filter_type]:
@@ -70,16 +55,18 @@ def show_main_page(root):
                 light_image=Image.open(item["path"]),
                 size=(35, 35)
             )
-            btn = ctk.CTkButton(master=frame,
-                                text="",
-                                image=icon,
-                                command=lambda i=item["index"]: on_filter_button_click(filter_type, i),
-                                fg_color="#EFEEEA",
-                                border_width=2,
-                                border_color="#222222",
-                                text_color="white", width=50, height=25,
-                                font=("Arial", 12, "bold"),
-                                corner_radius=100)
+            btn = ctk.CTkButton(
+                master=frame,
+                text="",
+                image=icon,
+                command=lambda i=item["index"]: on_filter_button_click(filter_type, i),
+                fg_color="#EFEEEA",
+                border_width=2,
+                border_color="#222222",
+                text_color="white", width=50, height=25,
+                font=("Arial", 12, "bold"),
+                corner_radius=100
+            )
             btn.pack(side=ctk.LEFT, padx=5)
             filter_buttons[filter_type].append(btn)
 
@@ -107,6 +94,15 @@ def show_main_page(root):
     create_filter_buttons("glasses", filter_frame)
     create_filter_buttons("hats", filter_frame)
     create_filter_buttons("mustaches", filter_frame)
+
+    def set_filter_index(filter_type, index):
+        global current_glasses_index, current_hat_index, current_mustache_index
+        if filter_type == "glasses":
+            current_glasses_index = index
+        elif filter_type == "hats":
+            current_hat_index = index
+        elif filter_type == "mustaches":
+            current_mustache_index = index
 
     def add_filter():
         main_frame.pack_forget()
@@ -154,6 +150,10 @@ def show_main_page(root):
         hover_color="#3CB371"
     )
     capture_button.pack(pady=40)
+
+    def select_filter(filter_name):
+        global current_filter
+        current_filter = filter_name
 
     def update_frame():
         global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index
