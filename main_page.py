@@ -145,7 +145,7 @@ def show_main_page(root):
 
     add_filter_icon = ctk.CTkImage(
         light_image=Image.open("images/add.png"),
-        size=(30, 30)
+        size=(40, 40)
     )
 
     add_filter_button = ctk.CTkButton(master=feature_frame,
@@ -153,8 +153,8 @@ def show_main_page(root):
                                 image=add_filter_icon,
                                 command=add_filter,
                                 fg_color="#E9A319",
-                                border_width=2,
-                                border_color="#222222",
+                                # border_width=2,
+                                # border_color="#222222",
                                 font=("Arial", 12,"bold"),
                                 text_color="white", width=62, height=62,
                                 corner_radius=60)
@@ -162,24 +162,51 @@ def show_main_page(root):
     def update_scroll_region(event):
         filter_frame.configure(scrollregion=filter_frame.bbox("all"))
 
+    back_icon = ctk.CTkImage(
+    light_image=Image.open("images/icon_back.png"),
+    size=(40, 40))
+
+    forward_icon = ctk.CTkImage(
+        light_image=Image.open("images/icon_forward.png"),
+        size=(40, 40))
+    
     filter_container = tb.Frame(main_frame)
-    filter_container.pack(fill="x", pady=5 )
+    filter_container.pack(fill="x", pady=5)
 
     scroll_frame = tb.Frame(filter_container)
     scroll_frame.pack(fill="x")
 
-    left_btn = tb.Button(scroll_frame, text="←", width=2, command=lambda: filter_frame.xview_scroll(-1, "units"))
-    left_btn.pack(side="left")
+    left_btn = ctk.CTkButton(
+        scroll_frame,
+        text="",
+        image=back_icon,
+        command=lambda: filter_frame.xview_scroll(-1, "units"),
+        width=40,
+        height=40,
+        fg_color="transparent",
+        hover_color="#FFC1B4",
+        corner_radius=10
+    )
+    left_btn.pack(side="left", padx=5)
 
     filter_frame = Canvas(scroll_frame, height=120, highlightthickness=0)
     filter_frame.pack(side="left", fill="x", expand=True)
 
-    right_btn = tb.Button(scroll_frame, text="→", width=2, command=lambda: filter_frame.xview_scroll(1, "units"))
-    right_btn.pack(side="left")
+    right_btn = ctk.CTkButton(
+        scroll_frame,
+        text="",
+        image=forward_icon,
+        command=lambda: filter_frame.xview_scroll(1, "units"),
+        width=40,
+        height=40,
+        fg_color="transparent",
+        hover_color="#FFC1B4",
+        corner_radius=11
+    )
+    right_btn.pack(side="left", padx=5)
 
     filter_buttons_frame = tb.Frame(filter_frame)
     filter_frame.create_window((0, 0), window=filter_buttons_frame, anchor="nw")
-
     create_filter_buttons("glasses", filter_buttons_frame)
     create_filter_buttons("hats", filter_buttons_frame)
     create_filter_buttons("mustaches", filter_buttons_frame)
@@ -299,6 +326,3 @@ def show_main_page(root):
     # root.mainloop()
     # cap.release()
     # cv2.destroyAllWindows()
-
-
-
