@@ -1,4 +1,3 @@
-# main_page.py
 import numpy as np
 import ttkbootstrap as tb
 from tkinter import Canvas
@@ -9,11 +8,11 @@ import threading
 from addfilter import show_add_filter_page
 import os
 
-
 current_glasses_index = 0
 current_hat_index = 0
 current_mustache_index = 0
 current_filter = None
+
 def show_main_page(root):
     global canvas, cap
 
@@ -22,15 +21,15 @@ def show_main_page(root):
 
     canvas = Canvas(main_frame, width=640, height=380)
     canvas.pack(pady=25)
-    # Webcam logic
+
     cap = cv2.VideoCapture(0)
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
     nose_cascade = cv2.CascadeClassifier('haarcascade/haarcascade_mcs_nose.xml')
 
-    # Load filter images
     filter_types = ["glasses", "hats", "mustaches"]
     filters = {ftype: [] for ftype in filter_types}
+    filter_buttons = {ftype: [] for ftype in filter_types}
 
     for ftype in filter_types:
         folder_path = f"filters/{ftype}"
@@ -39,6 +38,31 @@ def show_main_page(root):
                 path = os.path.join(folder_path, filename)
                 img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
                 filters[ftype].append({"img": img, "path": path, "index": idx})
+
+    def set_filter_index(filter_type, index):
+        global current_glasses_index, current_hat_index, current_mustache_index
+        if filter_type == "glasses":
+            current_glasses_index = index
+        elif filter_type == "hats":
+            current_hat_index = index
+        elif filter_type == "mustaches":
+            current_mustache_index = index
+
+    def select_filter(filter_name):
+        global current_filter
+        current_filter = filter_name
+
+    def on_filter_button_click(filter_type, index):
+        set_filter_index(filter_type, index)
+        select_filter(filter_type)
+
+        # Reset tất cả filter button về mặc định
+        for ftype in filter_types:
+            for i, btn in enumerate(filter_buttons[ftype]):
+                if ftype == filter_type and i == index:
+                    btn.configure(fg_color="#FFC0CB")  # Highlight selected
+                else:
+                    btn.configure(fg_color="#EFEEEA")  # Reset others
 
     def create_filter_buttons(filter_type, frame):
         for item in filters[filter_type]:
@@ -49,10 +73,7 @@ def show_main_page(root):
             btn = ctk.CTkButton(master=frame,
                                 text="",
                                 image=icon,
-                                command=lambda i=item["index"]: [
-                                    select_filter(filter_type),
-                                    set_filter_index(filter_type, i)
-                                ],
+                                command=lambda i=item["index"]: on_filter_button_click(filter_type, i),
                                 fg_color="#EFEEEA",
                                 border_width=2,
                                 border_color="#222222",
@@ -60,7 +81,8 @@ def show_main_page(root):
                                 font=("Arial", 12, "bold"),
                                 corner_radius=100)
             btn.pack(side=ctk.LEFT, padx=5)
-   
+            filter_buttons[filter_type].append(btn)
+
     def overlay_image(bg, overlay, x, y, size):
         w, h = size
         if w <= 0 or h <= 0:
@@ -79,38 +101,13 @@ def show_main_page(root):
         result = cv2.add(bg_part, fg_part)
         bg[y:y+h, x:x+w] = result
         return bg
-    
-
 
     filter_frame = tb.Frame(main_frame)
     filter_frame.pack(pady=15)
     create_filter_buttons("glasses", filter_frame)
-    create_filter_buttons("hats", filter_frame) 
-    create_filter_buttons("mustaches", filter_frame) 
+    create_filter_buttons("hats", filter_frame)
+    create_filter_buttons("mustaches", filter_frame)
 
-    def set_filter_index(filter_type, index):
-        global current_glasses_index, current_hat_index, current_mustache_index
-        if filter_type == "glasses":
-            current_glasses_index = index
-        elif filter_type == "hats":
-            current_hat_index = index
-        elif filter_type == "mustaches":
-            current_mustache_index = index
-
-    # Theme switcher
-    # def change_theme(theme_name):
-    #     root.style.theme_use(theme_name)
-
-    # themes = ["superhero", "darkly", "cosmo", "morph", "flatly"]
-    # theme_menu = tb.Menubutton(filter_frame, text="Change Theme", bootstyle="secondary outline")
-    # menu = tb.Menu(theme_menu)
-    # theme_menu["menu"] = menu
-    # for t in themes:
-    #     menu.add_command(label=t, command=lambda name=t: change_theme(name))
-    # theme_menu.pack(side=LEFT, padx=10)
-
-    # Capture button
-     # Theme switcher
     def add_filter():
         main_frame.pack_forget()
         threading.Thread(target=show_add_filter_page, args=(root,), daemon=True).start()
@@ -131,7 +128,7 @@ def show_main_page(root):
                                 text_color="white", width=50, height=25,
                                 corner_radius=25)
     add_filter_button.pack(side=ctk.LEFT, padx=5)
-    # Capture button
+
     def capture_image():
         ret, frame = cap.read()
         if ret:
@@ -157,13 +154,6 @@ def show_main_page(root):
         hover_color="#3CB371"
     )
     capture_button.pack(pady=40)
-
-    
-   
-
-    def select_filter(filter_name):
-        global current_filter
-        current_filter = filter_name
 
     def update_frame():
         global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index
@@ -220,9 +210,3 @@ def show_main_page(root):
         canvas.after(10, update_frame)
 
     update_frame()
-    # root.mainloop()
-    # cap.release()
-    # cv2.destroyAllWindows()
-
-
-
