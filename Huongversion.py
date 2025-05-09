@@ -4,7 +4,16 @@ import ttkbootstrap as tb
 from ttkbootstrap.constants import *
 from tkinter import Canvas
 from PIL import Image, ImageTk
-
+import ctypes
+awareness = ctypes.c_int()
+try:
+    print("DPI awareness level:", awareness.value)
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)  # System DPI aware
+    print("DPI awareness level:", awareness.value)
+except Exception:
+    ctypes.windll.user32.SetProcessDPIAware()
+# Kiểm tra DPI awareness
+print("DPI awareness level:", awareness.value)
 # Load cascades
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
