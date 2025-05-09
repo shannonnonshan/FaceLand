@@ -8,7 +8,7 @@ import cv2
 import threading
 from addfilter import show_add_filter_page
 import os
-
+from datetime import datetime
 
 current_glasses_index = 0
 current_hat_index = 0
@@ -16,14 +16,16 @@ current_mustache_index = 0
 current_filter = None
 def show_main_page(root):
     global canvas, cap
+    global filter_buttons_frame
 
     main_frame = tb.Frame(root)
     main_frame.pack()
 
     canvas = Canvas(main_frame, width=640, height=380)
     canvas.pack(pady=25)
+   
     # Webcam logic
-    cap = cv2.VideoCapture(0)
+    
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
     nose_cascade = cv2.CascadeClassifier('haarcascade/haarcascade_mcs_nose.xml')
@@ -39,7 +41,17 @@ def show_main_page(root):
                 path = os.path.join(folder_path, filename)
                 img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
                 filters[ftype].append({"img": img, "path": path, "index": idx})
-
+    def select_filter(filter_name):
+        global current_filter
+        current_filter = filter_name
+    def set_filter_index(filter_type, index):
+        global current_glasses_index, current_hat_index, current_mustache_index
+        if filter_type == "glasses":
+            current_glasses_index = index
+        elif filter_type == "hats":
+            current_hat_index = index
+        elif filter_type == "mustaches":
+            current_mustache_index = index
     def create_filter_buttons(filter_type, frame):
         for item in filters[filter_type]:
             icon = ctk.CTkImage(
@@ -79,23 +91,88 @@ def show_main_page(root):
         result = cv2.add(bg_part, fg_part)
         bg[y:y+h, x:x+w] = result
         return bg
+    feature_frame = tb.Frame(main_frame)
+    feature_frame.pack(pady=15)  
+    # Capture button
+    def capture_image():
+        ret, frame = cap.read()
+        if ret:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{timestamp}.png"
+
+            os.makedirs("capture", exist_ok=True)
+
+            filepath = os.path.join("capture", filename)
+
+            cv2.imwrite(filepath, frame)
+            print(f"Image saved as {filepath}")
+
+    camera_icon = ctk.CTkImage(
+        light_image=Image.open("images/cameraicon.png"),
+        size=(30, 30)
+    )
+
+    capture_button = ctk.CTkButton(
+        master=feature_frame,
+        text="",
+        image=camera_icon,
+        command=capture_image,
+        width=60,
+        height=60,
+        border_width=0,
+        corner_radius=60,
+        fg_color="#FF6363",
+        hover_color="#3CB371"
+    )
+    capture_button.pack(side=ctk.LEFT, padx=5)
+    def add_filter():
+        main_frame.pack_forget()
+        threading.Thread(target=show_add_filter_page, args=(root,), daemon=True).start()
+
+    add_filter_icon = ctk.CTkImage(
+        light_image=Image.open("images/add.png"),
+        size=(30, 30)
+    )
+
+    add_filter_button = ctk.CTkButton(master=feature_frame,
+                                text="",
+                                image=add_filter_icon,
+                                command=add_filter,
+                                fg_color="#E9A319",
+                                border_width=2,
+                                border_color="#222222",
+                                font=("Arial", 12,"bold"),
+                                text_color="white", width=62, height=62,
+                                corner_radius=60)
+    add_filter_button.pack(side=ctk.LEFT, padx=5)
+    def update_scroll_region(event):
+        filter_frame.configure(scrollregion=filter_frame.bbox("all"))
+
+    filter_container = tb.Frame(main_frame)
+    filter_container.pack(fill="x", pady=5 )
+
+    scroll_frame = tb.Frame(filter_container)
+    scroll_frame.pack(fill="x")
+
+    left_btn = tb.Button(scroll_frame, text="←", width=2, command=lambda: filter_frame.xview_scroll(-1, "units"))
+    left_btn.pack(side="left")
+
+    filter_frame = Canvas(scroll_frame, height=120, highlightthickness=0)
+    filter_frame.pack(side="left", fill="x", expand=True)
+
+    right_btn = tb.Button(scroll_frame, text="→", width=2, command=lambda: filter_frame.xview_scroll(1, "units"))
+    right_btn.pack(side="left")
+
+    filter_buttons_frame = tb.Frame(filter_frame)
+    filter_frame.create_window((0, 0), window=filter_buttons_frame, anchor="nw")
+
+    create_filter_buttons("glasses", filter_buttons_frame)
+    create_filter_buttons("hats", filter_buttons_frame)
+    create_filter_buttons("mustaches", filter_buttons_frame)
+    filter_buttons_frame.bind("<Configure>", update_scroll_region)
     
-
-
-    filter_frame = tb.Frame(main_frame)
-    filter_frame.pack(pady=15)
-    create_filter_buttons("glasses", filter_frame)
-    create_filter_buttons("hats", filter_frame) 
-    create_filter_buttons("mustaches", filter_frame) 
-
-    def set_filter_index(filter_type, index):
-        global current_glasses_index, current_hat_index, current_mustache_index
-        if filter_type == "glasses":
-            current_glasses_index = index
-        elif filter_type == "hats":
-            current_hat_index = index
-        elif filter_type == "mustaches":
-            current_mustache_index = index
+    cap = cv2.VideoCapture(0)
+    
 
     # Theme switcher
     # def change_theme(theme_name):
@@ -111,59 +188,8 @@ def show_main_page(root):
 
     # Capture button
      # Theme switcher
-    def add_filter():
-        main_frame.pack_forget()
-        threading.Thread(target=show_add_filter_page, args=(root,), daemon=True).start()
-
-    add_filter_icon = ctk.CTkImage(
-        light_image=Image.open("images/add.png"),
-        size=(30, 30)
-    )
-
-    add_filter_button = ctk.CTkButton(master=filter_frame,
-                                text="",
-                                image=add_filter_icon,
-                                command=add_filter,
-                                fg_color="#E9A319",
-                                border_width=2,
-                                border_color="#222222",
-                                font=("Arial", 12,"bold"),
-                                text_color="white", width=50, height=25,
-                                corner_radius=25)
-    add_filter_button.pack(side=ctk.LEFT, padx=5)
-    # Capture button
-    def capture_image():
-        ret, frame = cap.read()
-        if ret:
-            filename = "captured_image.png"
-            cv2.imwrite(filename, frame)
-            print(f"Image saved as {filename}")
-
-    camera_icon = ctk.CTkImage(
-        light_image=Image.open("images/cameraicon.png"),
-        size=(30, 30)
-    )
-
-    capture_button = ctk.CTkButton(
-        master=main_frame,
-        text="",
-        image=camera_icon,
-        command=capture_image,
-        width=60,
-        height=60,
-        border_width=0,
-        corner_radius=60,
-        fg_color="#FF6363",
-        hover_color="#3CB371"
-    )
-    capture_button.pack(pady=40)
-
     
-   
-
-    def select_filter(filter_name):
-        global current_filter
-        current_filter = filter_name
+    
 
     def update_frame():
         global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index
