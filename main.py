@@ -12,7 +12,7 @@ from PIL import Image, ImageTk
 # Load cascades
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
-nose_cascade = cv2.CascadeClassifier('haarcascade/haarcascade_mcs_nose.xml')
+nose_cascade = cv2.CascadeClassifier('./haarcascade/haarcascade_mcs_nose.xml')
 
 # Load filter images
 glasses = cv2.imread("filters/glasses.png", cv2.IMREAD_UNCHANGED)
