@@ -1,3 +1,4 @@
+# main_page.py
 import numpy as np
 import ttkbootstrap as tb
 from tkinter import Canvas
@@ -8,10 +9,16 @@ import threading
 from addfilter import show_add_filter_page
 import os
 
+# Global variables
 current_glasses_index = 0
 current_hat_index = 0
 current_mustache_index = 0
 current_filter = None
+active_buttons = {
+    "glasses": None,
+    "hats": None,
+    "mustaches": None
+}
 
 def show_main_page(root):
     global canvas, cap
@@ -21,15 +28,16 @@ def show_main_page(root):
 
     canvas = Canvas(main_frame, width=640, height=380)
     canvas.pack(pady=25)
-
+    
+    # Webcam logic
     cap = cv2.VideoCapture(0)
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
     nose_cascade = cv2.CascadeClassifier('haarcascade/haarcascade_mcs_nose.xml')
 
+    # Load filter images
     filter_types = ["glasses", "hats", "mustaches"]
     filters = {ftype: [] for ftype in filter_types}
-    filter_buttons = {ftype: [] for ftype in filter_types}  # NEW: store buttons
 
     for ftype in filter_types:
         folder_path = f"filters/{ftype}"
@@ -37,17 +45,18 @@ def show_main_page(root):
             if filename.endswith(".png"):
                 path = os.path.join(folder_path, filename)
                 img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
-                filters[ftype].append({"img": img, "path": path, "index": idx})
+                filters[ftype].append({"img": img, "path": path, "index": idx, "button": None})
 
-    def on_filter_button_click(filter_type, index):
-        set_filter_index(filter_type, index)
-        select_filter(filter_type)
-
-        for i, btn in enumerate(filter_buttons[filter_type]):
-            if i == index:
-                btn.configure(fg_color="#FFC0CB")  # Highlight color
-            else:
-                btn.configure(fg_color="#EFEEEA")  # Default color
+    def highlight_button(filter_type, button):
+        global active_buttons
+        
+        # Reset previously active button for this filter type
+        if active_buttons[filter_type] is not None:
+            active_buttons[filter_type].configure(fg_color="#EFEEEA")
+        
+        # Highlight the new button
+        button.configure(fg_color="#FFB6C1")  # Light pink color
+        active_buttons[filter_type] = button
 
     def create_filter_buttons(filter_type, frame):
         for item in filters[filter_type]:
@@ -55,20 +64,25 @@ def show_main_page(root):
                 light_image=Image.open(item["path"]),
                 size=(35, 35)
             )
-            btn = ctk.CTkButton(
-                master=frame,
-                text="",
-                image=icon,
-                command=lambda i=item["index"]: on_filter_button_click(filter_type, i),
-                fg_color="#EFEEEA",
-                border_width=2,
-                border_color="#222222",
-                text_color="white", width=50, height=25,
-                font=("Arial", 12, "bold"),
-                corner_radius=100
-            )
+            btn = ctk.CTkButton(master=frame,
+                                text="",
+                                image=icon,
+                                command=lambda f=filter_type, i=item["index"]: [
+                                    select_filter(f),
+                                    set_filter_index(f, i),
+                                    highlight_button(f, filters[f][i]["button"])
+                                ],
+                                fg_color="#EFEEEA",
+                                border_width=2,
+                                border_color="#222222",
+                                text_color="white", 
+                                width=50, 
+                                height=25,
+                                font=("Arial", 12, "bold"),
+                                corner_radius=100)
             btn.pack(side=ctk.LEFT, padx=5)
-            filter_buttons[filter_type].append(btn)
+            # Store button reference
+            item["button"] = btn
 
     def overlay_image(bg, overlay, x, y, size):
         w, h = size
@@ -92,8 +106,8 @@ def show_main_page(root):
     filter_frame = tb.Frame(main_frame)
     filter_frame.pack(pady=15)
     create_filter_buttons("glasses", filter_frame)
-    create_filter_buttons("hats", filter_frame)
-    create_filter_buttons("mustaches", filter_frame)
+    create_filter_buttons("hats", filter_frame) 
+    create_filter_buttons("mustaches", filter_frame) 
 
     def set_filter_index(filter_type, index):
         global current_glasses_index, current_hat_index, current_mustache_index
@@ -154,6 +168,12 @@ def show_main_page(root):
     def select_filter(filter_name):
         global current_filter
         current_filter = filter_name
+        # If selecting None, reset all highlights
+        if filter_name is None:
+            for btn in active_buttons.values():
+                if btn is not None:
+                    btn.configure(fg_color="#EFEEEA")
+            active_buttons = {k: None for k in active_buttons.keys()}
 
     def update_frame():
         global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index
