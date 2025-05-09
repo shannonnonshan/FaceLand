@@ -1,12 +1,11 @@
 # main.py
+import numpy as np
+import ttkbootstrap as tb
 import tkinter as tk
 from tkinter import Canvas
 import cv2
-from PIL import Image, ImageTk
-import ttkbootstrap as tb
 import customtkinter as ctk
-
-# Import các module khác
+from PIL import Image, ImageTk
 from welcome_page import show_welcome_page
 ctk.deactivate_automatic_dpi_awareness()
 

@@ -9,17 +9,11 @@ import threading
 from addfilter import show_add_filter_page
 import os
 
-# Global variables
+
 current_glasses_index = 0
 current_hat_index = 0
 current_mustache_index = 0
 current_filter = None
-active_buttons = {
-    "glasses": None,
-    "hats": None,
-    "mustaches": None
-}
-
 def show_main_page(root):
     global canvas, cap
 
@@ -28,7 +22,6 @@ def show_main_page(root):
 
     canvas = Canvas(main_frame, width=640, height=380)
     canvas.pack(pady=25)
-    
     # Webcam logic
     cap = cv2.VideoCapture(0)
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -45,18 +38,7 @@ def show_main_page(root):
             if filename.endswith(".png"):
                 path = os.path.join(folder_path, filename)
                 img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
-                filters[ftype].append({"img": img, "path": path, "index": idx, "button": None})
-
-    def highlight_button(filter_type, button):
-        global active_buttons
-        
-        # Reset previously active button for this filter type
-        if active_buttons[filter_type] is not None:
-            active_buttons[filter_type].configure(fg_color="#EFEEEA")
-        
-        # Highlight the new button
-        button.configure(fg_color="#FFB6C1")  # Light pink color
-        active_buttons[filter_type] = button
+                filters[ftype].append({"img": img, "path": path, "index": idx})
 
     def create_filter_buttons(filter_type, frame):
         for item in filters[filter_type]:
@@ -67,23 +49,18 @@ def show_main_page(root):
             btn = ctk.CTkButton(master=frame,
                                 text="",
                                 image=icon,
-                                command=lambda f=filter_type, i=item["index"]: [
-                                    select_filter(f),
-                                    set_filter_index(f, i),
-                                    highlight_button(f, filters[f][i]["button"])
+                                command=lambda i=item["index"]: [
+                                    select_filter(filter_type),
+                                    set_filter_index(filter_type, i)
                                 ],
                                 fg_color="#EFEEEA",
                                 border_width=2,
                                 border_color="#222222",
-                                text_color="white", 
-                                width=50, 
-                                height=25,
+                                text_color="white", width=50, height=25,
                                 font=("Arial", 12, "bold"),
                                 corner_radius=100)
             btn.pack(side=ctk.LEFT, padx=5)
-            # Store button reference
-            item["button"] = btn
-
+   
     def overlay_image(bg, overlay, x, y, size):
         w, h = size
         if w <= 0 or h <= 0:
@@ -102,6 +79,8 @@ def show_main_page(root):
         result = cv2.add(bg_part, fg_part)
         bg[y:y+h, x:x+w] = result
         return bg
+    
+
 
     filter_frame = tb.Frame(main_frame)
     filter_frame.pack(pady=15)
@@ -118,6 +97,20 @@ def show_main_page(root):
         elif filter_type == "mustaches":
             current_mustache_index = index
 
+    # Theme switcher
+    # def change_theme(theme_name):
+    #     root.style.theme_use(theme_name)
+
+    # themes = ["superhero", "darkly", "cosmo", "morph", "flatly"]
+    # theme_menu = tb.Menubutton(filter_frame, text="Change Theme", bootstyle="secondary outline")
+    # menu = tb.Menu(theme_menu)
+    # theme_menu["menu"] = menu
+    # for t in themes:
+    #     menu.add_command(label=t, command=lambda name=t: change_theme(name))
+    # theme_menu.pack(side=LEFT, padx=10)
+
+    # Capture button
+     # Theme switcher
     def add_filter():
         main_frame.pack_forget()
         threading.Thread(target=show_add_filter_page, args=(root,), daemon=True).start()
@@ -138,7 +131,7 @@ def show_main_page(root):
                                 text_color="white", width=50, height=25,
                                 corner_radius=25)
     add_filter_button.pack(side=ctk.LEFT, padx=5)
-
+    # Capture button
     def capture_image():
         ret, frame = cap.read()
         if ret:
@@ -168,12 +161,6 @@ def show_main_page(root):
     def select_filter(filter_name):
         global current_filter
         current_filter = filter_name
-        # If selecting None, reset all highlights
-        if filter_name is None:
-            for btn in active_buttons.values():
-                if btn is not None:
-                    btn.configure(fg_color="#EFEEEA")
-            active_buttons = {k: None for k in active_buttons.keys()}
 
     def update_frame():
         global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index
@@ -230,3 +217,9 @@ def show_main_page(root):
         canvas.after(10, update_frame)
 
     update_frame()
+    # root.mainloop()
+    # cap.release()
+    # cv2.destroyAllWindows()
+
+
+

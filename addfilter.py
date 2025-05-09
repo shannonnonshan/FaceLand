@@ -30,7 +30,7 @@ def show_add_filter_page(root):
     bg_canvas.create_text(canvas_width // 2, title_y,
                           text="Add Filter Page",
                           font=("Helvetica", 18, "bold"),
-                          fill="black",
+                          fill="darkblue",
                           anchor="n")
 
     bg_canvas.create_text(canvas_width // 2, subtitle_y,
