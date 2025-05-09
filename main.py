@@ -17,9 +17,24 @@ eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml
 nose_cascade = cv2.CascadeClassifier('haarcascade/haarcascade_mcs_nose.xml')
 
 # Load filter images
-glasses = cv2.imread("filters/glasses.png", cv2.IMREAD_UNCHANGED)
-hat = cv2.imread("filters/hat.png", cv2.IMREAD_UNCHANGED)
-mustache = cv2.imread("filters/mustache.png", cv2.IMREAD_UNCHANGED)
+glasses = [
+    cv2.imread("filters/glasses.png", cv2.IMREAD_UNCHANGED),
+    cv2.imread("filters/glass2.png", cv2.IMREAD_UNCHANGED)
+]
+
+hats = [
+    cv2.imread("filters/hat.png", cv2.IMREAD_UNCHANGED),
+    cv2.imread("filters/hat2.png", cv2.IMREAD_UNCHANGED)
+]
+
+mustaches = [
+    cv2.imread("filters/mustache.png", cv2.IMREAD_UNCHANGED),
+    cv2.imread("filters/mustache2.png", cv2.IMREAD_UNCHANGED)
+]
+
+current_glasses_index = 0
+current_hat_index = 0
+current_mustache_index = 0
 
 def overlay_image(bg, overlay, x, y, size):
     w, h = size
@@ -53,15 +68,13 @@ x = (screen_width - window_width) // 2
 y = (screen_height - window_height) // 2
 
 root.geometry(f"{window_width}x{window_height}+{x}+{y}")
-#root.resizable(False, False)
-
 
 # ========== Welcome Page ==========
 # Load images
-bg_image = Image.open("background.jpg").resize((800, 650))
+bg_image = Image.open("images/background.jpg").resize((800, 650))
 bg_photo = ImageTk.PhotoImage(bg_image)
 
-team_img = Image.open("team_photo.png").resize((350, 250))
+team_img = Image.open("images/team_photo.png").resize((350, 250))
 team_photo = ImageTk.PhotoImage(team_img)
 
 # Welcome Frame
@@ -73,7 +86,6 @@ bg_canvas.pack(fill="both", expand=True)
 bg_canvas.create_image(0, 0, image=bg_photo, anchor="nw")
 
 # Labels
-#subjectName = ["Subject Name"]
 canvas_width = 800
 title_y = 30
 subtitle_y = 60
@@ -82,7 +94,7 @@ bg_canvas.create_text(canvas_width // 2, title_y,
                       text="Subject Name",
                       font=("Helvetica", 14, "bold"),
                       fill="darkblue",
-                      anchor="n")  # anchor 'n' để canh từ trên xuống
+                      anchor="n")
 
 bg_canvas.create_text(canvas_width // 2, subtitle_y,
                       text="Digital Image Processing",
@@ -104,20 +116,18 @@ canvas_height = 600
 
 start_x = 160
 gap = 250
-y_position = canvas_height - 30  # nằm gần mép dưới
+y_position = canvas_height - 30
 
 for idx, name in enumerate(students):
     x = start_x + idx * gap
     y = y_position
 
-    # Lớp bóng màu trắng (lệch nhẹ)
     bg_canvas.create_text(x + 2, y + 2,
                           text=name,
                           font=("Helvetica", 12, "bold"),
                           fill="white",
                           anchor="s")
 
-    # Lớp chính màu xanh lá
     bg_canvas.create_text(x, y,
                           text=name,
                           font=("Helvetica", 12, "bold"),
@@ -130,11 +140,8 @@ def start_app():
     welcome_frame.pack_forget()
     main_frame.pack(fill="both", expand=True)
     update_frame()
-   
-   # Cấu hình canvas để hỗ trợ transparency
-bg_canvas.configure(bg='#75d0ef')  # Màu nền canvas
-   
-   # Đặt nút lên canvas (cách tốt hơn)
+
+bg_canvas.configure(bg='#75d0ef')
 
 start_button = ctk.CTkButton(master=bg_canvas,
                              text="Let's Get Started",
@@ -143,62 +150,165 @@ start_button = ctk.CTkButton(master=bg_canvas,
                              height=60,
                              corner_radius=20,
                              fg_color="#FE7743",
-                             text_color="white",         # Chữ trắng
-                             hover_color="#3E4A6C",      # Màu khi hover
+                             text_color="white",
+                             hover_color="#3E4A6C",
                              command=start_app)
 
-# Đặt nút lên canvas tại vị trí mong muốn
-bg_canvas.create_window(400, 400, window= start_button)
+bg_canvas.create_window(400, 400, window=start_button)
 
 # ========== Main Page ==========
 main_frame = tb.Frame(root)
 
-title_label = tb.Label(main_frame, text="🎭 Funny Face Filters 🎭", font=("Helvetica", 22, "bold"), bootstyle="inverse-info")
-title_label.pack(pady=10)
-
-canvas = Canvas(main_frame, width=640, height=420)
-canvas.pack()
+canvas = Canvas(main_frame, width=640, height=380)
+canvas.pack(pady=25)
 
 filter_frame = tb.Frame(main_frame)
 filter_frame.pack(pady=15)
 
-glasses_button = ctk.CTkButton(master=filter_frame,
-                               text="Glasses",
-                               command=lambda: select_filter("glasses"),
-                               fg_color="black",
-                               text_color="white", width=55, height=35,
-                               font=("Arial", 12,"bold"),
-                               corner_radius=20)
-glasses_button.pack(side=ctk.LEFT, padx=10)
+# Glasses buttons
+def next_glasses():
+    global current_glasses_index
+    current_glasses_index = (current_glasses_index + 1) % len(glasses)
+    select_filter("filters/glasses")
 
-hat_button = ctk.CTkButton(master=filter_frame,
-                           text="Hat",
-                           command=lambda: select_filter("hat"),
-                           fg_color="black",
-                           font=("Arial", 12,"bold"),
-                           text_color="white", width=55, height=35,
-                           corner_radius=20)
-hat_button.pack(side=ctk.LEFT, padx=10)
-mustache_button = ctk.CTkButton(master=filter_frame,
-                               text="Mustache",
-                               command=lambda: select_filter("mustache"),
-                               fg_color="black",
+glass_icon1 = ctk.CTkImage(
+    light_image=Image.open("filters/glasses.png"),
+    size=(35, 35)
+)
+
+glass_icon2 = ctk.CTkImage(
+    light_image=Image.open("filters/glass2.png"),
+    size=(35, 35)
+)
+
+glasses_button1 = ctk.CTkButton(master=filter_frame,
+                               text="",
+                               image=glass_icon1,
+                               command=lambda: [select_filter("glasses"), set_glasses_index(0)],
+                               fg_color="#EFEEEA",
+                               border_width=2,
+                               border_color="#222222",
+                               text_color="white", width=50, height=25,
                                font=("Arial", 12,"bold"),
-                               text_color="white", width=55, height=35,
-                               corner_radius=20)
-mustache_button.pack(side=ctk.LEFT, padx=10)
+                               corner_radius=100)
+glasses_button1.pack(side=ctk.LEFT, padx=5)
+
+glasses_button2 = ctk.CTkButton(master=filter_frame,
+                               text="",
+                               image=glass_icon2,
+                               command=lambda: [select_filter("glasses"), set_glasses_index(1)],
+                               fg_color="#EFEEEA",
+                               border_width=2,
+                               border_color="#222222",
+                               text_color="white", width=50, height=25,
+                               font=("Arial", 12,"bold"),
+                               corner_radius=100)
+glasses_button2.pack(side=ctk.LEFT, padx=5)
+
+# Hat buttons
+def next_hat():
+    global current_hat_index
+    current_hat_index = (current_hat_index + 1) % len(hats)
+    select_filter("filters/hat")
+
+hat_icon1 = ctk.CTkImage(
+    light_image=Image.open("filters/hat.png"),
+    size=(35, 35)
+)
+
+hat_icon2 = ctk.CTkImage(
+    light_image=Image.open("filters/hat2.png"),
+    size=(35, 35)
+)
+
+hat_button1 = ctk.CTkButton(master=filter_frame,
+                           text="",
+                           image=hat_icon1,
+                           command=lambda: [select_filter("hat"), set_hat_index(0)],
+                           fg_color="#EFEEEA",
+                           border_width=2,
+                           border_color="#222222",
+                           font=("Arial", 12,"bold"),
+                           text_color="white", width=50, height=25,
+                           corner_radius=25)
+hat_button1.pack(side=ctk.LEFT, padx=5)
+
+hat_button2 = ctk.CTkButton(master=filter_frame,
+                           text="",
+                           image=hat_icon2,
+                           command=lambda: [select_filter("hat"), set_hat_index(1)],
+                           fg_color="#EFEEEA",
+                           border_width=2,
+                           border_color="#222222",
+                           font=("Arial", 12,"bold"),
+                           text_color="white", width=50, height=25,
+                           corner_radius=25)
+hat_button2.pack(side=ctk.LEFT, padx=5)
+
+# Mustache buttons
+def next_mustache():
+    global current_mustache_index
+    current_mustache_index = (current_mustache_index + 1) % len(mustaches)
+    select_filter("filters/mustache")
+
+mustache_icon1 = ctk.CTkImage(
+    light_image=Image.open("filters/mustache.png"),
+    size=(35, 35)
+)
+
+mustache_icon2 = ctk.CTkImage(
+    light_image=Image.open("filters/mustache2.png"),
+    size=(35, 35)
+)
+
+mustache_button1 = ctk.CTkButton(master=filter_frame,
+                               text="",
+                               image=mustache_icon1,
+                               command=lambda: [select_filter("mustache"), set_mustache_index(0)],
+                               fg_color="#EFEEEA",
+                               border_width=2,
+                               border_color="#222222",
+                               font=("Arial", 12,"bold"),
+                               text_color="white", width=50, height=25,
+                               corner_radius=25)
+mustache_button1.pack(side=ctk.LEFT, padx=5)
+
+mustache_button2 = ctk.CTkButton(master=filter_frame,
+                               text="",
+                               image=mustache_icon2,
+                               command=lambda: [select_filter("mustache"), set_mustache_index(1)],
+                               fg_color="#EFEEEA",
+                               border_width=2,
+                               border_color="#222222",
+                               font=("Arial", 12,"bold"),
+                               text_color="white", width=50, height=25,
+                               corner_radius=25)
+mustache_button2.pack(side=ctk.LEFT, padx=5)
+
+def set_glasses_index(index):
+    global current_glasses_index
+    current_glasses_index = index
+
+def set_hat_index(index):
+    global current_hat_index
+    current_hat_index = index
+
+def set_mustache_index(index):
+    global current_mustache_index
+    current_mustache_index = index
 
 # Theme switcher
-def change_theme(theme_name):
-    root.style.theme_use(theme_name)
+# def change_theme(theme_name):
+#     root.style.theme_use(theme_name)
 
-themes = ["superhero", "darkly", "cosmo", "morph", "flatly"]
-theme_menu = tb.Menubutton(filter_frame, text="Change Theme", bootstyle="secondary outline") # Place in filter_frame
-menu = tb.Menu(theme_menu)
-theme_menu["menu"] = menu
-for t in themes:
-    menu.add_command(label=t, command=lambda name=t: change_theme(name))
-theme_menu.pack(side=LEFT, padx=10) # Use pack with side=LEFT
+# themes = ["superhero", "darkly", "cosmo", "morph", "flatly"]
+# theme_menu = tb.Menubutton(filter_frame, text="Change Theme", bootstyle="secondary outline")
+# menu = tb.Menu(theme_menu)
+# theme_menu["menu"] = menu
+# for t in themes:
+#     menu.add_command(label=t, command=lambda name=t: change_theme(name))
+# theme_menu.pack(side=LEFT, padx=10)
+
 # Capture button
 def capture_image():
     ret, frame = cap.read()
@@ -208,22 +318,23 @@ def capture_image():
         print(f"Image saved as {filename}")
 
 camera_icon = ctk.CTkImage(
-            light_image=Image.open("cameraicon.png"),
-            size=(30, 30)
-        )
+    light_image=Image.open("images/cameraicon.png"),
+    size=(30, 30)
+)
 
 capture_button = ctk.CTkButton(
     master=main_frame,
     text="",
-    image = camera_icon,
+    image=camera_icon,
     command=capture_image,
     width=60,
     height=60,
-    corner_radius=60,  # Bằng 1/2 chiều cao để tạo hình tròn
+    border_width=0,
+    corner_radius=60,
     fg_color="#FF6363",
     hover_color="#3CB371"
 )
-capture_button.pack(pady=15)
+capture_button.pack(pady=40)
 
 # Webcam logic
 cap = cv2.VideoCapture(0)
@@ -234,7 +345,7 @@ def select_filter(filter_name):
     current_filter = filter_name
 
 def update_frame():
-    global current_filter, cap
+    global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index
     ret, frame = cap.read()
     if not ret:
         return
@@ -253,29 +364,29 @@ def update_frame():
             eye2_center = (fx + ex2 + ew2 // 2, fy + ey2 + eh2 // 2)
             dx = eye2_center[0] - eye1_center[0]
             glasses_width = int(2.2 * abs(dx))
-            glasses_height = int(glasses_width * glasses.shape[0] / glasses.shape[1])
+            glasses_height = int(glasses_width * glasses[current_glasses_index].shape[0] / glasses[current_glasses_index].shape[1])
             center_x = (eye1_center[0] + eye2_center[0]) // 2
             center_y = (eye1_center[1] + eye2_center[1]) // 2
             x = center_x - glasses_width // 2
             y = center_y - glasses_height // 2
-            frame = overlay_image(frame, glasses, x, y, (glasses_width, glasses_height))
+            frame = overlay_image(frame, glasses[current_glasses_index], x, y, (glasses_width, glasses_height))
 
         elif current_filter == "hat":
             hat_width = fw
-            hat_height = int(hat_width * hat.shape[0] / hat.shape[1])
+            hat_height = int(hat_width * hats[current_hat_index].shape[0] / hats[current_hat_index].shape[1])
             hx = fx
             hy = fy - hat_height + 15
-            frame = overlay_image(frame, hat, hx, hy, (hat_width, hat_height))
+            frame = overlay_image(frame, hats[current_hat_index], hx, hy, (hat_width, hat_height))
 
         elif current_filter == "mustache":
             nose = nose_cascade.detectMultiScale(roi_gray, 1.3, 5)
             if len(nose) > 0:
                 nx, ny, nw, nh = nose[0]
                 mustache_width = int(nw * 1.5)
-                mustache_height = int(mustache_width * mustache.shape[0] / mustache.shape[1])
+                mustache_height = int(mustache_width * mustaches[current_mustache_index].shape[0] / mustaches[current_mustache_index].shape[1])
                 mx = fx + nx + nw // 2 - mustache_width // 2
                 my = fy + ny + nh - 40
-                frame = overlay_image(frame, mustache, mx, my, (mustache_width, mustache_height))
+                frame = overlay_image(frame, mustaches[current_mustache_index], mx, my, (mustache_width, mustache_height))
 
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = Image.fromarray(frame_rgb)
