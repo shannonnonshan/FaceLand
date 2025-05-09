@@ -8,6 +8,8 @@ import ttkbootstrap as tb
 from ttkbootstrap.constants import *
 from tkinter import Canvas
 from PIL import Image, ImageTk
+from ctypes import windll
+ctk.deactivate_automatic_dpi_awareness()
 
 # Load cascades
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -37,13 +39,12 @@ def overlay_image(bg, overlay, x, y, size):
     result = cv2.add(bg_part, fg_part)
     bg[y:y+h, x:x+w] = result
     return bg
-
-# Initialize tkinter window
 root = tb.Window(themename="superhero")
 root.title("Funny Face Filters")
 root.geometry("800x650")
 window_width = 800
 window_height = 650
+
 
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
