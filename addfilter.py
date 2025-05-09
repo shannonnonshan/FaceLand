@@ -84,8 +84,11 @@ def show_add_filter_page(root):
         "hover_color": "#3E4A6C",
     }
     def go_back():
-        from main_page import show_main_page
+        from main_page import show_main_page, cap, running
+        global cap, running
         add_filter_frame.pack_forget()  # Ẩn frame hiện tại
+        cap = None  # reset để show_main_page khởi tạo lại
+        running = True  # cho phép update_frame tiếp tục
         threading.Thread(target=show_main_page, args=(root,), daemon=True).start()
     add_glasses_btn = ctk.CTkButton(master=bg_canvas,
                                     text="Add Glasses",

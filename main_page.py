@@ -14,10 +14,13 @@ current_glasses_index = 0
 current_hat_index = 0
 current_mustache_index = 0
 current_filter = None
-def show_main_page(root):
-    global canvas, cap
-    global filter_buttons_frame
 
+
+def show_main_page(root):
+    global canvas, cap, running
+    global filter_buttons_frame
+    cap = None
+    running = True
     main_frame = tb.Frame(root)
     main_frame.pack()
 
@@ -29,7 +32,11 @@ def show_main_page(root):
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
     nose_cascade = cv2.CascadeClassifier('haarcascade/haarcascade_mcs_nose.xml')
-
+    if cap is None or not cap.isOpened():
+        cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        tb.Messagebox.show_error("Webcam Error", "Could not open webcam.")
+        return
     # Load filter images
     filter_types = ["glasses", "hats", "mustaches"]
     filters = {ftype: [] for ftype in filter_types}
@@ -126,8 +133,10 @@ def show_main_page(root):
     )
     capture_button.pack(side=ctk.LEFT, padx=5)
     def add_filter():
+        global running
+        running = False
         main_frame.pack_forget()
-        threading.Thread(target=show_add_filter_page, args=(root,), daemon=True).start()
+        show_add_filter_page(root)
 
     add_filter_icon = ctk.CTkImage(
         light_image=Image.open("images/add.png"),
@@ -171,8 +180,7 @@ def show_main_page(root):
     create_filter_buttons("mustaches", filter_buttons_frame)
     filter_buttons_frame.bind("<Configure>", update_scroll_region)
     
-    cap = cv2.VideoCapture(0)
-    
+   
 
     # Theme switcher
     # def change_theme(theme_name):
@@ -192,7 +200,9 @@ def show_main_page(root):
     
 
     def update_frame():
-        global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index
+        global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index, running
+        if not running:
+            return
         ret, frame = cap.read()
         if not ret:
             return
