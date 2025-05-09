@@ -1,12 +1,14 @@
 # main.py
+import numpy as np
+import ttkbootstrap as tb
 import tkinter as tk
 from tkinter import Canvas
 import cv2
 from PIL import Image, ImageTk
-
+from welcome_page import show_welcome_page
 # Load cascades
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt.xml')
+eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye_tree_eyeglasses.xml')
 nose_cascade = cv2.CascadeClassifier('./haarcascade/haarcascade_mcs_nose.xml')
 
 # Load filter images

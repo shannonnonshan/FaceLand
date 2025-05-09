@@ -4,6 +4,14 @@ from tkinter import Canvas, filedialog, messagebox
 from PIL import Image, ImageTk
 import ttkbootstrap as tb
 import customtkinter as ctk
+import threading
+def show_add_filter_page(root):
+    import os
+import shutil
+from tkinter import Canvas, filedialog, messagebox
+from PIL import Image, ImageTk
+import ttkbootstrap as tb
+import customtkinter as ctk
 
 def show_add_filter_page(root):
     team_img = Image.open("images/team_photo.png").resize((350, 250))
@@ -34,8 +42,8 @@ def show_add_filter_page(root):
     bg_canvas.create_image(400, 280, image=team_photo)
     bg_canvas.team_photo = team_photo
 
-    # Action function
-    def select_filter_image():
+    # Action function (generalized)
+    def select_filter_image(filter_type):
         filepath = filedialog.askopenfilename(
             title="Chọn ảnh filter",
             filetypes=[("PNG Images", "*.png")]
@@ -47,33 +55,65 @@ def show_add_filter_page(root):
             img = Image.open(filepath)
             width, height = img.size
 
-            if width != height or width > 250:
-                messagebox.showerror("Lỗi", "Ảnh phải là hình vuông và ≤ 250x250 pixels.")
+            if width != height :
+                messagebox.showerror("Error", "The picture must square shape.")
                 return
 
             if img.mode != "RGBA" or not img.getchannel("A").getextrema()[0] < 255:
-                messagebox.showerror("Lỗi", "Ảnh phải có nền trong suốt (PNG RGBA).")
+                messagebox.showerror("Error", "Transparent image (PNG RGBA).")
                 return
 
-            os.makedirs("filters", exist_ok=True)
-            dest_path = os.path.join("filters", os.path.basename(filepath))
+            folder = os.path.join("filters", filter_type)
+            os.makedirs(folder, exist_ok=True)
+            dest_path = os.path.join(folder, os.path.basename(filepath))
             shutil.copy(filepath, dest_path)
 
-            messagebox.showinfo("Success", f"Add filter: {os.path.basename(filepath)}")
+            messagebox.showinfo("Success","Successfully Added")
 
         except Exception as e:
-            messagebox.showerror("Error", f"Cancel handle thí image:\n{str(e)}")
+            messagebox.showerror("Error", f"Cancel handle this image:\n{str(e)}")
 
-    # Nút chọn ảnh
-    add_button = ctk.CTkButton(master=bg_canvas,
-                               text="Pick a remove background picture",
-                               font=("Helvetica", 16, "bold"),
-                               width=200,
-                               height=50,
-                               corner_radius=20,
-                               fg_color="#FE7743",
-                               text_color="white",
-                               hover_color="#3E4A6C",
-                               command=select_filter_image)
+    # Buttons
+    button_style = {
+        "font": ("Helvetica", 16, "bold"),
+        "width": 200,
+        "height": 50,
+        "corner_radius": 20,
+        "fg_color": "#FE7743",
+        "text_color": "white",
+        "hover_color": "#3E4A6C",
+    }
+    def go_back():
+        from main_page import show_main_page
+        add_filter_frame.pack_forget()  # Ẩn frame hiện tại
+        threading.Thread(target=show_main_page, args=(root,), daemon=True).start()
+    add_glasses_btn = ctk.CTkButton(master=bg_canvas,
+                                    text="Add Glasses",
+                                    command=lambda: select_filter_image("glasses"),
+                                    **button_style)
 
-    bg_canvas.create_window(400, 450, window=add_button)
+    add_hat_btn = ctk.CTkButton(master=bg_canvas,
+                                text="Add Hat",
+                                command=lambda: select_filter_image("hats"),
+                                **button_style)
+
+    add_mustache_btn = ctk.CTkButton(master=bg_canvas,
+                                     text="Add Mustache",
+                                     command=lambda: select_filter_image("mustaches"),
+                                     **button_style)
+    back_button = ctk.CTkButton(master=bg_canvas,
+                            text="← Back to Main Page",
+                            font=("Helvetica", 14),
+                            width=180,
+                            height=40,
+                            corner_radius=15,
+                            fg_color="#3E4A6C",
+                            text_color="white",
+                            hover_color="#5C6B8A",
+                            command=go_back)
+
+    # Place buttons
+    bg_canvas.create_window(400, 450, window=add_glasses_btn)
+    bg_canvas.create_window(250, 520, window=add_hat_btn)
+    bg_canvas.create_window(550, 520, window=add_mustache_btn)
+    bg_canvas.create_window(90, 600, window=back_button)
