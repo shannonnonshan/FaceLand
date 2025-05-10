@@ -249,7 +249,7 @@ def show_main_page(root):
                 imgh = filters["hats"][current_hat_index]["img"]
                 hat_height = int(hat_width * imgh.shape[0] / imgh.shape[1])
                 hx = fx
-                hy = fy - hat_height + 15
+                hy = fy - hat_height
                 frame = overlay_image(frame, imgh, hx, hy, (hat_width, hat_height))
 
             elif current_filter == "mustaches":
@@ -260,7 +260,7 @@ def show_main_page(root):
                     imgm = filters["mustaches"][current_mustache_index]["img"]
                     mustache_height = int(mustache_width * imgm.shape[0] / imgm.shape[1])
                     mx = fx + nx + nw // 2 - mustache_width // 2
-                    my = fy + ny + nh - 35
+                    my = fy + int(fh*0.55)
                     frame = overlay_image(frame, imgm, mx, my, (mustache_width, mustache_height))
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         global processed_frame
