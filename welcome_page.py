@@ -76,7 +76,8 @@ def show_welcome_page(root):
     bg_canvas.configure(bg='#75d0ef')
     def start_app():
         welcome_frame.pack_forget()
-        show_main_page(root)
+        threading.Thread(target=show_main_page, args=(root,), daemon=True).start()
+        # show_main_page(root)
     start_button = ctk.CTkButton(master=bg_canvas,
                                 text="Let's Get Started",
                                 font=("Helvetica", 20, "bold"),
