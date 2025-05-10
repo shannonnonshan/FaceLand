@@ -245,11 +245,11 @@ def show_main_page(root):
                     frame = overlay_image(frame, img, x, y, (glasses_width, glasses_height))
 
             elif current_filter == "hats":
-                hat_width = fw
+                hat_width = int(fw*1.2)
                 imgh = filters["hats"][current_hat_index]["img"]
                 hat_height = int(hat_width * imgh.shape[0] / imgh.shape[1])
-                hx = fx
-                hy = fy - hat_height
+                hx = fx - int((hat_width - fw) / 2)
+                hy = fy - hat_height + 30
                 frame = overlay_image(frame, imgh, hx, hy, (hat_width, hat_height))
 
             elif current_filter == "mustaches":
