@@ -34,7 +34,7 @@ def show_main_page(root):
     # Webcam logic
     
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt.xml')
-    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye_tree_eyeglasses.xml')
+    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
     nose_cascade = cv2.CascadeClassifier('haarcascade/haarcascade_mcs_nose.xml')
     if cap is None or not cap.isOpened():
         cap = cv2.VideoCapture(0)
@@ -212,25 +212,6 @@ def show_main_page(root):
     create_filter_buttons("mustaches", filter_buttons_frame)
     filter_buttons_frame.bind("<Configure>", update_scroll_region)
     
-   
-
-    # Theme switcher
-    # def change_theme(theme_name):
-    #     root.style.theme_use(theme_name)
-
-    # themes = ["superhero", "darkly", "cosmo", "morph", "flatly"]
-    # theme_menu = tb.Menubutton(filter_frame, text="Change Theme", bootstyle="secondary outline")
-    # menu = tb.Menu(theme_menu)
-    # theme_menu["menu"] = menu
-    # for t in themes:
-    #     menu.add_command(label=t, command=lambda name=t: change_theme(name))
-    # theme_menu.pack(side=LEFT, padx=10)
-
-    # Capture button
-     # Theme switcher
-    
-    
-
     def update_frame():
         
         global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index
@@ -241,66 +222,35 @@ def show_main_page(root):
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
         global prev_face
-        if len(faces) > 0:
-            faces = sorted(faces, key=lambda x: x[2]*x[3], reverse=True)
-            (fx_new, fy_new, fw_new, fh_new) = faces[0]
-
-            alpha = 0.4
-            if prev_face is not None:
-                fx = int(alpha * fx_new + (1 - alpha) * prev_face[0])
-                fy = int(alpha * fy_new + (1 - alpha) * prev_face[1])
-                fw = int(alpha * fw_new + (1 - alpha) * prev_face[2])
-                fh = int(alpha * fh_new + (1 - alpha) * prev_face[3])
-            else:
-                fx, fy, fw, fh = fx_new, fy_new, fw_new, fh_new
-
-            prev_face = (fx, fy, fw, fh)
-
+        
+        for (fx, fy, fw, fh) in faces:
             roi_gray = gray[fy:fy+fh, fx:fx+fw]
-            eyes = eye_cascade.detectMultiScale(roi_gray)
 
-
-            if current_filter == "glasses" and len(eyes) >= 2:
-                eyes = sorted(eyes, key=lambda x: x[0])
-                (ex1, ey1, ew1, eh1) = eyes[0]
-                (ex2, ey2, ew2, eh2) = eyes[1]
-                eye1_center = (fx + ex1 + ew1 // 2, fy + ey1 + eh1 // 2)
-                eye2_center = (fx + ex2 + ew2 // 2, fy + ey2 + eh2 // 2)
-                dx = eye2_center[0] - eye1_center[0]
-                glasses_width = int(2.2 * abs(dx))
-                img = filters["glasses"][current_glasses_index]["img"]
-                glasses_height = int(glasses_width * img.shape[0] / img.shape[1])
-                center_x = (eye1_center[0] + eye2_center[0]) // 2
-                center_y = (eye1_center[1] + eye2_center[1]) // 2
-                x = center_x - glasses_width // 2
-                y = center_y - glasses_height // 2
-                frame = overlay_image(frame, img, x, y, (glasses_width, glasses_height))
+            if current_filter == "glasses":
+                eyes = eye_cascade.detectMultiScale(roi_gray)
+                if len(eyes) >= 2:
+                    eyes = sorted(eyes, key=lambda x: x[0])
+                    (ex1, ey1, ew1, eh1) = eyes[0]
+                    (ex2, ey2, ew2, eh2) = eyes[1]
+                    eye1_center = (fx + ex1 + ew1 // 2, fy + ey1 + eh1 // 2)
+                    eye2_center = (fx + ex2 + ew2 // 2, fy + ey2 + eh2 // 2)
+                    dx = eye2_center[0] - eye1_center[0]
+                    glasses_width = int(2.2 * abs(dx))
+                    img = filters["glasses"][current_glasses_index]["img"]
+                    glasses_height = int(glasses_width * img.shape[0] / img.shape[1])
+                    center_x = (eye1_center[0] + eye2_center[0]) // 2
+                    center_y = (eye1_center[1] + eye2_center[1]) // 2
+                    x = center_x - glasses_width // 2
+                    y = center_y - glasses_height // 2
+                    frame = overlay_image(frame, img, x, y, (glasses_width, glasses_height))
 
             elif current_filter == "hats":
-                global prev_hat_pos
-
                 hat_width = fw
                 imgh = filters["hats"][current_hat_index]["img"]
                 hat_height = int(hat_width * imgh.shape[0] / imgh.shape[1])
-
-                # Vị trí mũ mới
-                hx_new = fx
-                hy_new = fy - hat_height + 15
-
-                # Làm mượt vị trí
-                alpha = 0.5  # hệ số làm mượt
-                if prev_hat_pos is not None:
-                    hx = int(alpha * hx_new + (1 - alpha) * prev_hat_pos[0])
-                    hy = int(alpha * hy_new + (1 - alpha) * prev_hat_pos[1])
-                else:
-                    hx, hy = hx_new, hy_new
-
-                # Lưu vị trí cũ
-                prev_hat_pos = (hx, hy)
-
-                # Overlay
+                hx = fx
+                hy = fy - hat_height + 15
                 frame = overlay_image(frame, imgh, hx, hy, (hat_width, hat_height))
-
 
             elif current_filter == "mustaches":
                 nose = nose_cascade.detectMultiScale(roi_gray, 1.3, 5)
@@ -310,9 +260,8 @@ def show_main_page(root):
                     imgm = filters["mustaches"][current_mustache_index]["img"]
                     mustache_height = int(mustache_width * imgm.shape[0] / imgm.shape[1])
                     mx = fx + nx + nw // 2 - mustache_width // 2
-                    my = fy + ny + nh - 40
+                    my = fy + ny + nh - 35
                     frame = overlay_image(frame, imgm, mx, my, (mustache_width, mustache_height))
-        
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         global processed_frame
         processed_frame = frame.copy()
