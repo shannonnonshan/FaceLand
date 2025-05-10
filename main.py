@@ -27,3 +27,9 @@ root.geometry(f"{window_width}x{window_height}+{x}+{y}")
 show_welcome_page(root)
 
 root.mainloop()
+
+
+
+
+
+
