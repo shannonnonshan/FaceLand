@@ -9,6 +9,10 @@ import threading
 from addfilter import show_add_filter_page
 import os
 from datetime import datetime
+import csv
+import time
+import psutil
+from face_detection import detect_faces, apply_filter_to_face
 
 processed_frame = None
 prev_hat_pos = None
@@ -18,13 +22,41 @@ current_glasses_index = 0
 current_hat_index = 0
 current_mustache_index = 0
 current_filter = None
+current_fps = 0
+prev_time = time.time()
+running = True
+logging_started = False
 
+def start_logging_thread():
+    global logging_started
+    if logging_started:
+            return
+    logging_started = True
+    def log_performance():
+        while running:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            cpu_percent = psutil.cpu_percent(interval=1)  # interval=1 để lấy mẫu ổn định
+            ram_percent = psutil.virtual_memory().percent
 
+            # Lấy giá trị FPS mới nhất từ biến toàn cục
+            global current_fps
+            fps = current_fps
+
+            with open("fps_cpu_data.csv", mode='a', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow([timestamp, fps, cpu_percent, ram_percent])
+
+            time.sleep(1.5)  # log mỗi ~2 giây
+
+    t = threading.Thread(target=log_performance, daemon=True)
+    t.start()
 def show_main_page(root):
-    global canvas, cap, running
+    start_logging_thread()
+    global canvas, cap, running, logging_started
     global filter_buttons_frame
     cap = None
     running = True
+    logging_started = False
     main_frame = tb.Frame(root)
     main_frame.pack()
 
@@ -211,20 +243,27 @@ def show_main_page(root):
     create_filter_buttons("hats", filter_buttons_frame)
     create_filter_buttons("mustaches", filter_buttons_frame)
     filter_buttons_frame.bind("<Configure>", update_scroll_region)
-    
+    fps_buffer = []
     def update_frame():
-        
+        global prev_time, current_fps, avg_fps
+        global fps_buffer
         global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index
+        if cap is None or not cap.isOpened():
+            cap = cv2.VideoCapture(0)
+            if not cap.isOpened():
+                tb.Messagebox.show_error("Webcam Error", "Could not open webcam.")
+                return
         ret, frame = cap.read()
         if not ret:
             return
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-
+        detected_faces = []
         global prev_face
         
         for (fx, fy, fw, fh) in faces:
             roi_gray = gray[fy:fy+fh, fx:fx+fw]
+            detected_faces.append((fx, fy, fw, fh))
 
             if current_filter == "glasses":
                 eyes = eye_cascade.detectMultiScale(roi_gray)
@@ -262,6 +301,26 @@ def show_main_page(root):
                     mx = fx + nx + nw // 2 - mustache_width // 2
                     my = fy + int(fh*0.55)
                     frame = overlay_image(frame, imgm, mx, my, (mustache_width, mustache_height))
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        end = time.time()
+        current_fps = 1 / (end - prev_time)
+        prev_time = end
+        
+
+        # Trong update_frame():
+        fps_buffer.append(current_fps)
+        if len(fps_buffer) > 100:
+            fps_buffer.pop(0)
+        avg_fps = sum(fps_buffer) / len(fps_buffer)
+        # Lấy thông tin CPU và RAM
+        cpu_percent = psutil.cpu_percent(interval=None)  # không chờ
+        ram_percent = psutil.virtual_memory().percent
+
+        # Vẽ các thông số lên frame
+        cv2.putText(frame, f"FPS: {current_fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (144, 238, 144), 2)  # Light Green
+        cv2.putText(frame, f"CPU: {cpu_percent:.0f}%", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 102), 2)  # Light Yellow
+        cv2.putText(frame, f"RAM: {ram_percent:.0f}%", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 102, 102), 2)  # Light Red
+
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         global processed_frame
         processed_frame = frame.copy()
