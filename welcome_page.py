@@ -8,7 +8,7 @@ import threading
 
 def show_welcome_page(root):
     # Load hình ảnh
-    bg_image = Image.open("images/background.jpg").resize((800, 650))  # Resize to 800x650
+    bg_image = Image.open("images/background.jpg").resize((800, 700))  # Resize to 800x650
     bg_photo = ImageTk.PhotoImage(bg_image)  # Convert to Tkinter-compatible format
 
     team_img = Image.open("images/team_photo.png").resize((350, 250))
@@ -42,7 +42,7 @@ def show_welcome_page(root):
                           fill="#3E7B27",
                           anchor="n")
     bg_canvas.create_text(700, 100,
-                          text="Dr. Hoàng Văn Dũng",
+                          text="Prof. Hoàng Văn Dũng",
                           font=("Helvetica", 12,"bold"),
                           fill="black",
                           anchor="n")
