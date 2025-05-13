@@ -14,10 +14,10 @@ import time
 import psutil
 from face_detection import detect_faces, apply_filter_to_face
 
-fps_buffer = []
 processed_frame = None
 prev_hat_pos = None
 prev_face = None
+
 current_glasses_index = 0
 current_hat_index = 0
 current_mustache_index = 0
@@ -54,52 +54,15 @@ def show_main_page(root):
     start_logging_thread()
     global canvas, cap, running, logging_started
     global filter_buttons_frame
+    global fps_buffer 
+    fps_buffer = []
+    global canvas, cap, running, logging_started
+    global filter_buttons_frame
     cap = None
     running = True
     logging_started = False
     main_frame = tb.Frame(root)
     main_frame.pack()
-    header_frame = tb.Frame(main_frame)
-    header_frame.pack(pady=0)
-
-    # Teacher 
-    info_frame = tb.Frame(header_frame)
-    info_frame.pack(pady=10, fill='x')
-
-    # Frame chứa subject_label để căn lề trái
-    subject_frame = tb.Frame(info_frame)
-    subject_frame.pack(side="left", padx=0, anchor="w")
-
-    subject_label = tb.Label(subject_frame, text="Subject: Digital Image Processing", foreground="#FFFA8D",
-                            font=("Arial", 11, "bold"))
-    subject_label.pack(side="left", padx=0)
-
-    teacher_label = tb.Label(info_frame, text="Teacher: Prof. Hoàng Văn Dũng", foreground="#FFFA8D",
-                            font=("Arial", 11, "bold"))
-    teacher_label.pack(side="left", padx=30)
-    # Student names (3 labels in one row)
-    students_frame = tb.Frame(header_frame)
-    students_frame.pack(pady=(0, 5))
-
-    # Frame chứa các label để dễ căn giữa
-    students_container = tb.Frame(students_frame)
-    students_container.pack()
-
-    student1_label = tb.Label(students_container, 
-                            text="Lê Thị Thu Hương - 22110040", foreground="#AFDDFF",
-                            font=("Arial", 11, "bold"))
-    student1_label.pack(side="left", padx=0)
-
-    student2_label = tb.Label(students_container, 
-                            text="Đoàn Minh Khanh - 22110042", foreground="#AFDDFF",
-                            font=("Arial", 11, "bold"))
-    student2_label.pack(side="left", padx=15)
-
-    student3_label = tb.Label(students_container, 
-                            text="Đinh Thị Thanh Vy - 22110093", foreground="#AFDDFF",
-                            font=("Arial", 11, "bold"))
-    student3_label.pack(side="left", padx=15)
-
 
     canvas = Canvas(main_frame, width=640, height=380)
     canvas.pack(pady=25)
@@ -284,11 +247,12 @@ def show_main_page(root):
     create_filter_buttons("hats", filter_buttons_frame)
     create_filter_buttons("mustaches", filter_buttons_frame)
     filter_buttons_frame.bind("<Configure>", update_scroll_region)
-    
+    fps_buffer = []
     def update_frame():
         global prev_time, current_fps, avg_fps
         global fps_buffer
         global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index
+        
         if cap is None or not cap.isOpened():
             cap = cv2.VideoCapture(0)
             if not cap.isOpened():
