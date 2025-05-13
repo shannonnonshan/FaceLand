@@ -107,7 +107,7 @@ def show_main_page(root):
     # Webcam logic
     
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt.xml')
-    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye_tree_eyeglasses.xml')
     nose_cascade = cv2.CascadeClassifier('haarcascade/haarcascade_mcs_nose.xml')
     if cap is None or not cap.isOpened():
         cap = cv2.VideoCapture(0)
