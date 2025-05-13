@@ -26,7 +26,7 @@ current_fps = 0
 prev_time = time.time()
 running = True
 logging_started = False
-
+fps_buffer = []
 def start_logging_thread():
     global logging_started
     if logging_started:
@@ -243,7 +243,7 @@ def show_main_page(root):
     create_filter_buttons("hats", filter_buttons_frame)
     create_filter_buttons("mustaches", filter_buttons_frame)
     filter_buttons_frame.bind("<Configure>", update_scroll_region)
-    fps_buffer = []
+    
     def update_frame():
         global prev_time, current_fps, avg_fps
         global fps_buffer
