@@ -213,6 +213,7 @@ def show_main_page(root):
     def add_filter():
         global running
         running = False
+        cap.release()
         main_frame.pack_forget()
         show_add_filter_page(root)
 
@@ -291,9 +292,6 @@ def show_main_page(root):
         global current_filter, cap, current_glasses_index, current_hat_index, current_mustache_index
         if cap is None or not cap.isOpened():
             cap = cv2.VideoCapture(0)
-            if not cap.isOpened():
-                tb.Messagebox.show_error("Webcam Error", "Could not open webcam.")
-                return
         ret, frame = cap.read()
         if not ret:
             return

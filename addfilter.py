@@ -83,9 +83,9 @@ def show_add_filter_page(root):
         add_filter_frame.pack_forget()
         threading.Thread(target=show_main_page, args=(root,), daemon=True).start()
 
-    # Style nút
-# Tạo một frame trung gian trong suốt để chứa các nút
-# Tạo một frame trung gian trong suốt để chứa các nút
+        # Style nút
+    # Tạo một frame trung gian trong suốt để chứa các nút
+    # Tạo một frame trung gian trong suốt để chứa các nút
     button_container = ctk.CTkFrame(
         bg_canvas,
         fg_color="#88ccfc",
